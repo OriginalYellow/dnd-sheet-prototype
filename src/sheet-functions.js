@@ -251,13 +251,13 @@ const Select = {
   skill: Helper.lenseSelect({
     name: Skill.name,
     total: [Skill.Fold.total],
-    bonuses: [Skill.bonuses, L.elems, '']
+    bonuses: [Skill.bonuses, L.elems, ''],
   }),
   score: Helper.lenseSelect({
     name: Score.name,
     total: [Score.Fold.total],
-  })
-}
+  }),
+};
 
 // MIKE: move these 2 state utilities to a different file:
 const putResultant = a => State.put(a)
@@ -384,17 +384,9 @@ const transforms = L.seq(...[
   ...baseAbilityScoreTransforms,
 ]);
 
-const newSheet = L.transform(transforms, testSheet); // ?
+const getTransform = optics => L.seq(...optics);
 
-
-
-
-
-
-
-
-
-
+const newSheet = L.transform(transforms, testSheet);
 
 const testTransforms1 = [
   // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 14).execWith)],
@@ -423,44 +415,56 @@ const testTransforms2 = [
 ];
 
 
-L.transform(transforms)(testSheet); // ?
+L.transform(transforms)(testSheet);
 
-L.get(View.scoreByNameBonuses('dex'), newSheet); // ?
-L.get([Model.scores, Scores.scoreByName('dex'), 'base'], newSheet); // ?
-L.get(View.scoreByNameTotal('dex'), newSheet); // ?
+L.get(View.scoreByNameBonuses('dex'), newSheet);
+L.get([Model.scores, Scores.scoreByName('dex'), 'base'], newSheet);
+L.get(View.scoreByNameTotal('dex'), newSheet);
 
-L.get(View.scoreByNameBonuses('cha'), newSheet); // ?
-L.get([Model.scores, Scores.scoreByName('cha'), 'base'], newSheet); // ?
-L.get(View.scoreByNameTotal('cha'), newSheet); // ?
+L.get(View.scoreByNameBonuses('cha'), newSheet);
+L.get([Model.scores, Scores.scoreByName('cha'), 'base'], newSheet);
+L.get(View.scoreByNameTotal('cha'), newSheet);
 
-L.get(View.skillByNameTotal('sleight of hand'), newSheet); // ?
-L.get(View.skillByNameBonuses('sleight of hand'), newSheet); // ?
+L.get(View.skillByNameTotal('sleight of hand'), newSheet);
+L.get(View.skillByNameBonuses('sleight of hand'), newSheet);
 
-L.get(View.skillByNameTotal('intimidation'), newSheet); // ?
-L.get(View.skillByNameBonuses('intimidation'), newSheet); // ?
+L.get(View.skillByNameTotal('intimidation'), newSheet);
+L.get(View.skillByNameBonuses('intimidation'), newSheet);
 
-L.get(View.skillByNameBonuses('perception'), newSheet); // ?
-L.get([Model.skills, Skills.skillByName('perception')], newSheet); // ?
-L.get(View.skillByNameTotal('perception'), newSheet); // ?
+L.get(View.skillByNameBonuses('perception'), newSheet);
+L.get([Model.skills, Skills.skillByName('perception')], newSheet);
+L.get(View.skillByNameTotal('perception'), newSheet);
 
-export const skills = L.collect([Model.skills, L.elems])//?
+const skills = L.collect([Model.skills, L.elems]); // ?
 
-skills(newSheet) // ?
+skills(newSheet);
 // export thingy;
 // export const L.get([Model.skills, L.elems], )
 
-export const skillByNameTotal = skillName => L.get(View.skillByNameTotal(skillName));
-Select.skill // ?
-export const populateSkills = L.collectAs(Select.skill, [Model.skills, L.elems])
-export const populateScores = L.collectAs(Select.score, [Model.scores, L.elems])
-// populateScores(newSheet); // ?
-export const populate = L.transform(transforms)
-export const doThing = () => console.log('thing done')
+const skillByNameTotal = skillName => L.get(View.skillByNameTotal(skillName));
+const populateSkills = L.collectAs(Select.skill, [Model.skills, L.elems]);
+const populateScores = L.collectAs(Select.score, [Model.scores, L.elems]);
+populateScores(newSheet);
+const populate = L.transform(transforms);
+// const doThing = () => console.log('thing done');
+// const applyHalfing =
+// just echo over anything set by the player as the "base" score:
+const incScore = L.transform(L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'player', (ScoreSkillMappings, 'cha', 12).execWith)));
 
-populateSkills(newSheet) // ?
+
+// incScore(newSheet); // ?
+
+populateSkills(newSheet); // ?
 
 // export default exportObj;
 
+export default {
+  skillByNameTotal,
+  populateSkills,
+  populateScores,
+  populate,
+  incScore,
+};
 
 // MIKE: implement these:
 // - races
@@ -506,4 +510,4 @@ populateSkills(newSheet) // ?
 //   return L.transform([L.seq(...transforms)], sheet);
 // };
 
-// let populatedSheet = addFinalTransforms(sourceTargets, testSheet); // ?
+// let populatedSheet = addFinalTransforms(sourceTargets, testSheet); 
