@@ -147,6 +147,11 @@ const Helper = {
   createScoreBonusNew: (sourceName, bonusVals) => ({
     [sourceName]: bonusVals,
   }),
+
+  lenseSelect: R.pipe(
+    R.mapObjIndexed(R.unary(L.get)),
+    R.applySpec,
+  )
 };
 
 
@@ -171,7 +176,7 @@ const Skills = {
 
 const Skill = {
   bonuses: ['bonuses', L.define({})],
-
+  name: ['name'],
   vals: [L.branch({
     bonuses: [L.define({}), L.children, 'val'],
     base: [L.define(0)],
@@ -240,6 +245,12 @@ const Transform = {
   )),
 };
 
+const Select = {
+  skill: Helper.lenseSelect({
+    name: Skill.name,
+    total: [Skill.Fold.total],
+  })
+}
 
 // MIKE: move these 2 state utilities to a different file:
 const putResultant = a => State.put(a)
@@ -387,7 +398,7 @@ const testTransforms2 = [
 ];
 
 const transforms = L.seq(...[
-  ...raceTransforms.elf,
+  ...raceTransforms['halfling'],
   ...subraceTransforms['lightfoot'],
   ...baseAbilityScoreTransforms,
   ...testTransforms1,
@@ -416,8 +427,22 @@ L.get(View.skillByNameBonuses('perception'), newSheet); // ?
 L.get([Model.skills, Skills.skillByName('perception')], newSheet); // ?
 L.get(View.skillByNameTotal('perception'), newSheet); // ?
 
+export const skills = L.collect([Model.skills, L.elems])//?
 
-export default L.transform(transforms);
+skills(newSheet) // ?
+// export thingy;
+// export const L.get([Model.skills, L.elems], )
+
+export const skillByNameTotal = skillName => L.get(View.skillByNameTotal(skillName));
+Select.skill // ?
+export const populateSkills = L.collectAs(Select.skill, [Model.skills, L.elems])
+export const populate = L.transform(transforms)
+export const doThing = () => console.log('thing done')
+
+populateSkills(newSheet) // ?
+
+// export default exportObj;
+
 
 // MIKE: implement these:
 // - races

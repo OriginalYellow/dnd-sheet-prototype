@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import transform from '@/sheet-functions';
+import * as F from './sheet-functions';
 
 Vue.use(Vuex);
 
@@ -55,15 +55,12 @@ export default new Vuex.Store({
   },
 
   getters: {
-    // getSheet: state => transform(state.sheet),
-    getSheet: (state) => {
-      console.log(state);
-      console.log(transform(state));
-      return 5;
-    },
+    sheet: ({ sheet }) => F.populate(sheet),
+    
+    skills: ({ sheet }) => F.populateSkills(F.populate(sheet))
   },
 
-  mutations: {
+  mutations: {  
 
   },
   actions: {

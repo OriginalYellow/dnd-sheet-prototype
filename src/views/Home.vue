@@ -16,12 +16,12 @@ export default {
     HelloWorld,
   },
 
-  computed: {
-    ...mapGetters(['getSheet']),
-  },
+  // computed: {
+  //   ...mapGetters(['getSheet']),
+  // },
 
-  mounted() {
-    console.log(this.getSheet);
-  },
+  // mounted() {
+  //   console.log(this.getSheet);
+  // },
 };
 </script>
