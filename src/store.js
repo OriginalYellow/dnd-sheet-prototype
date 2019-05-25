@@ -57,7 +57,8 @@ export default new Vuex.Store({
   getters: {
     sheet: ({ sheet }) => F.populate(sheet),
     
-    skills: ({ sheet }) => F.populateSkills(F.populate(sheet))
+    skills: ({ sheet }) => F.populateSkills(F.populate(sheet)),
+    scores: ({ sheet }) => F.populateScores(F.populate(sheet)),
   },
 
   mutations: {  

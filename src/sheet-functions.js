@@ -194,6 +194,8 @@ const Scores = {
 const Score = {
   bonuses: ['bonuses', L.define({})],
 
+  name: ['name'],
+
   vals: [L.branch({
     bonuses: [L.define({}), L.children, 'val'],
     base: [L.define(0)],
@@ -249,6 +251,11 @@ const Select = {
   skill: Helper.lenseSelect({
     name: Skill.name,
     total: [Skill.Fold.total],
+    bonuses: [Skill.bonuses, L.elems, '']
+  }),
+  score: Helper.lenseSelect({
+    name: Score.name,
+    total: [Score.Fold.total],
   })
 }
 
@@ -366,10 +373,28 @@ const subraceTransforms = {
 };
 
 const baseAbilityScoreTransforms = [
-  // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 12).execWith)],
-  // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'dex', 10).execWith)],
-  // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'str', 10).execWith)],
+  [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 12).execWith)],
+  [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'dex', 10).execWith)],
+  [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'str', 10).execWith)],
 ];
+
+const transforms = L.seq(...[
+  ...raceTransforms['elf'],
+  ...subraceTransforms['lightfoot'],
+  ...baseAbilityScoreTransforms,
+]);
+
+const newSheet = L.transform(transforms, testSheet); // ?
+
+
+
+
+
+
+
+
+
+
 
 const testTransforms1 = [
   // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 14).execWith)],
@@ -397,15 +422,6 @@ const testTransforms2 = [
   // [Model.skills, Skills.skillByName('perception'), Skill.bonuses, L.assignOp(Helper.createScoreBonusNew())],
 ];
 
-const transforms = L.seq(...[
-  ...raceTransforms['halfling'],
-  ...subraceTransforms['lightfoot'],
-  ...baseAbilityScoreTransforms,
-  ...testTransforms1,
-  ...testTransforms2,
-]);
-
-const newSheet = L.transform(transforms, testSheet); // ?
 
 L.transform(transforms)(testSheet); // ?
 
@@ -436,6 +452,8 @@ skills(newSheet) // ?
 export const skillByNameTotal = skillName => L.get(View.skillByNameTotal(skillName));
 Select.skill // ?
 export const populateSkills = L.collectAs(Select.skill, [Model.skills, L.elems])
+export const populateScores = L.collectAs(Select.score, [Model.scores, L.elems])
+// populateScores(newSheet); // ?
 export const populate = L.transform(transforms)
 export const doThing = () => console.log('thing done')
 
