@@ -14,6 +14,7 @@ const cur = R.curry;
 // dummy data:
 
 const testSheet = {
+  scorePool: 28,
   scores: [
     {
       name: 'cha',
@@ -151,7 +152,7 @@ const Helper = {
   lenseSelect: R.pipe(
     R.mapObjIndexed(R.unary(L.get)),
     R.applySpec,
-  )
+  ),
 };
 
 
@@ -167,6 +168,7 @@ const Model = {
   abilities: ['abilities'],
   resistances: ['resistances'],
   subrace: ['subrace'],
+  scorePool: ['scorePool'],
 };
 
 const Skills = {
@@ -266,14 +268,15 @@ const putResultant = a => State.put(a)
 const putState = R.always(State.get());
 
 const Stateful = {
-  addBonusToScore: (scoreSkillMappings, sourceName, scoreName, val) => State.modify(
-    L.transform(
-      Transform.addBonusToScore(
-        Helper.createScoreValBonus(sourceName, val),
-        scoreName,
+  addBonusToScore: (scoreSkillMappings, sourceName, scoreName, val) => State
+    .modify(
+      L.transform(
+        Transform.addBonusToScore(
+          Helper.createScoreValBonus(sourceName, val),
+          scoreName,
+        ),
       ),
-    ),
-  )
+    )
     .chain(putState)
     .map(
       L.get(
@@ -286,12 +289,50 @@ const Stateful = {
       ),
     )),
 
-  setScoreBase: (scoreSkillMappings, scoreName, val) => State.modify(
-    L.set(
-      [Model.scores, Scores.scoreByName(scoreName), 'base'],
-      val,
-    ),
-  )
+  incScoreBase: (scoreSkillMappings, scoreName, val) => State
+    .modify(
+      L.modify(
+        [
+          Model.scores,
+          Scores.scoreByName(scoreName),
+          Score.bonuses,
+          'base',
+          L.define({}),
+          'val',
+          L.define(0),
+        ],
+        R.add(val),
+      ),
+    )
+    .chain(
+      R.always(
+        State.modify(
+          L.modify(
+            [Model.scorePool],
+            R.flip(R.subtract)(val),
+          ),
+        ),
+      ),
+    )
+    .chain(putState)
+    .map(
+      L.get(
+        Model.Readonly.bonusFromScore(scoreName),
+      ),
+    )
+    .chain(bonus => State.modify(
+      L.transform(
+        Transform.addBonusToSkills(scoreSkillMappings, bonus),
+      ),
+    )),
+
+  setScoreBase: (scoreSkillMappings, scoreName, val) => State
+    .modify(
+      L.set(
+        [Model.scores, Scores.scoreByName(scoreName), 'base'],
+        val,
+      ),
+    )
     .chain(putState)
     .map(
       L.get(
@@ -379,14 +420,14 @@ const baseAbilityScoreTransforms = [
 ];
 
 const transforms = L.seq(...[
-  ...raceTransforms['elf'],
+  ...raceTransforms['halfling'],
   ...subraceTransforms['lightfoot'],
-  ...baseAbilityScoreTransforms,
+  // ...baseAbilityScoreTransforms,
 ]);
 
 const getTransform = optics => L.seq(...optics);
 
-const newSheet = L.transform(transforms, testSheet);
+const newSheet = L.transform(transforms, testSheet); // ?
 
 const testTransforms1 = [
   // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 14).execWith)],
@@ -413,9 +454,6 @@ const testTransforms2 = [
 
   // [Model.skills, Skills.skillByName('perception'), Skill.bonuses, L.assignOp(Helper.createScoreBonusNew())],
 ];
-
-
-L.transform(transforms)(testSheet);
 
 L.get(View.scoreByNameBonuses('dex'), newSheet);
 L.get([Model.scores, Scores.scoreByName('dex'), 'base'], newSheet);
@@ -446,24 +484,44 @@ const populateSkills = L.collectAs(Select.skill, [Model.skills, L.elems]);
 const populateScores = L.collectAs(Select.score, [Model.scores, L.elems]);
 populateScores(newSheet);
 const populate = L.transform(transforms);
-// const doThing = () => console.log('thing done');
-// const applyHalfing =
 // just echo over anything set by the player as the "base" score:
-const incScore = L.transform(L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'player', (ScoreSkillMappings, 'cha', 12).execWith)));
-
+const setScoreBase = (scoreName, val) => L.transform([L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'base', scoreName, val).execWith)]);
+// const incScoreBase = (scoreName, val) => L.modify([Model.scores, Scores.scoreByName(scoreName), Score.bonuses, 'base', 'val'], R.add(val));
+const incScoreBase = (scoreName, val) => L.transform(
+  [L.modifyOp(Stateful.incScoreBase(ScoreSkillMappings, scoreName, val).execWith)],
+);
 
 // incScore(newSheet); // ?
+// const testSheet2 = setScoreBase('dex', 15)(newSheet); // ?
+// const testSheet2 = setScoreBase('dex', 15)(testSheet); // ?
+// const testSheet3 = incScoreBase('dex', 3)(testSheet2); // ?
+// const testSheet3 = L.transform([L.modifyOp(Stateful.incScoreBase(ScoreSkillMappings, 'dex', 2).execWith)], testSheet2);
+// const testSheet3 = incScoreBase('dex', 2)(testSheet2); // ?
+const testSheet2 = testSheet;
+const testSheet3 = incScoreBase('dex', 2)(testSheet2); // ?
+// const testSheet4 = Stateful.incScoreBase(ScoreSkillMappings, 'dex', 2).execWith
 
-populateSkills(newSheet); // ?
+L.get(View.scoreByNameTotal('dex'), testSheet2); // ?
+L.get(View.scoreByNameTotal('dex'), testSheet3); // ?
+L.get(Model.scorePool, testSheet3); // ?
+L.get([Model.scores, Scores.scoreByName('dex')], testSheet3); // ?
+
+// MIKE: maybe pass in the mapping function?
+populateSkills(testSheet2); // ?
+populateSkills(testSheet3); // ?
+populateScores(testSheet2); // ?
+
+populateSkills(testSheet); // ?
 
 // export default exportObj;
 
-export default {
+export {
   skillByNameTotal,
   populateSkills,
   populateScores,
   populate,
-  incScore,
+  setScoreBase,
+  incScoreBase,
 };
 
 // MIKE: implement these:
@@ -510,4 +568,4 @@ export default {
 //   return L.transform([L.seq(...transforms)], sheet);
 // };
 
-// let populatedSheet = addFinalTransforms(sourceTargets, testSheet); 
+// let populatedSheet = addFinalTransforms(sourceTargets, testSheet);

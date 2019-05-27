@@ -1,12 +1,23 @@
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-return-assign */
 import Vue from 'vue';
 import Vuex from 'vuex';
-import * as F from './sheet-functions';
+import {
+  populateSkills, populateScores, populate, incScoreBase,
+} from './sheet-functions';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    // transforms: {
+    //   incScoreBase: {
+    //     scoreName: 'dex',
+    //     val:
+    //   }
+    // },
     sheet: {
+      scorePool: 28,
       scores: [
         {
           name: 'cha',
@@ -54,13 +65,15 @@ export default new Vuex.Store({
   },
 
   getters: {
-    sheet: ({ sheet }) => F.populate(sheet),
-    skills: ({ sheet }) => F.populateSkills(F.populate(sheet)),
-    scores: ({ sheet }) => F.populateScores(F.populate(sheet)),
+    sheet: ({ sheet }) => populate(sheet),
+    skills: ({ sheet }) => populateSkills(populate(sheet)),
+    scores: ({ sheet }) => populateScores(populate(sheet)),
   },
 
-  mutations: {  
-
+  mutations: {
+    incScoreBase: (state, { scoreName, val }) => {
+      state.sheet = incScoreBase(scoreName, val)(state.sheet);
+    },
   },
   actions: {
 
