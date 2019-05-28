@@ -3,7 +3,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {
-  selectSkills, selectScores, populate, incScoreBase, setRace, 
+  selectSkills, selectScores, populate, incScoreBase,
 } from './sheet/sheet-functions';
 
 Vue.use(Vuex);
@@ -17,7 +17,7 @@ export default new Vuex.Store({
     //   }
     // },
     sheet: {
-      race: undefined,
+      race: null,
       scorePool: 28,
       scores: [
         {
