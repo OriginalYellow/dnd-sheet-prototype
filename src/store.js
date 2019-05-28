@@ -10,12 +10,6 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    // transforms: {
-    //   incScoreBase: {
-    //     scoreName: 'dex',
-    //     val:
-    //   }
-    // },
     sheet: {
       race: null,
       scorePool: 28,
@@ -73,6 +67,8 @@ export default new Vuex.Store({
 
   mutations: {
     incScoreBase: (state, { scoreName, val }) => {
+      // MIKE: unhooks anything listening to properties on the state - if
+      // incScoreBase could do a deep clone it would work
       state.sheet = incScoreBase(scoreName, val)(state.sheet);
     },
 

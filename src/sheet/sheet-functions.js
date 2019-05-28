@@ -163,6 +163,7 @@ const Model = {
   scores: ['scores', L.normalize(R.sortBy(L.get('name')))],
   skills: ['skills', L.normalize(R.sortBy(L.get('name')))],
   race: ['race'],
+  subraceOptions: ['subraceOptions', L.normalize(R.sortBy(R.always))],
   size: ['size'],
   speed: ['speed'],
   languages: ['languages'],
@@ -384,6 +385,7 @@ const raceTransforms = {
       condition: 'frightened',
       source: 'race',
     })],
+    [Model.subraceOptions, L.setOp(['lightfoot'])],
   ],
   elf: [
     [Model.race, L.setOp('elf')],
@@ -401,8 +403,23 @@ const raceTransforms = {
       [Model.skills, Skills.skillByName('perception'), 'proficient', L.setOp(true)],
     ),
     [Model.resistances, L.appendOp({
-      name: 'Fey Ancestry',
+      name: 'fey ancestry',
       condition: 'charmed',
+      source: 'race',
+    })],
+    [Model.abilities, L.appendOp({
+      name: 'darkvision',
+      explanation: 'Accustomed to twilit forests and the night sky, you have superior vision in dark and dim conditions. You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can’t discern color in darkness, only shades of gray.',
+      source: 'race',
+    })],
+    [Model.abilities, L.appendOp({
+      name: 'fey ancestry',
+      explanation: 'You have advantage on saving throws against being charmed, and magic can’t put you to sleep.',
+      source: 'race',
+    })],
+    [Model.abilities, L.appendOp({
+      name: 'trance',
+      explanation: 'Elves don’t need to sleep. Instead, they meditate deeply, remaining semiconscious, for 4 hours a day. (The Common word for such meditation is “trance.”) While meditating, you can dream after a fashion; such dreams are actually mental exercises that have become reflexive through years of practice.',
       source: 'race',
     })],
   ],
@@ -424,18 +441,12 @@ Stateful.populateRace = State.get(
   R.prop('race'),
 )
   .chain(raceName => State.modify(
-    // L.transform(L.seq(...raceTransforms[raceName])),
     L.transform(L.seq(...R.propOr([R.always], raceName, raceTransforms))),
   ));
 
-const transforms = L.seq(...[
-  ...raceTransforms['halfling'],
-  ...subraceTransforms['lightfoot'],
-]);
-
 const getTransform = optics => L.seq(...optics);
 
-const newSheet = L.transform(transforms, testSheet); // ?
+// const newSheet = L.transform(transforms, testSheet); // ?
 
 const testTransforms1 = [
   // [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 14).execWith)],
@@ -489,13 +500,7 @@ const testSheet7 = populateRace(testSheet); // ?
 L.get(View.scoreByNameTotal('dex'), testSheet2); // ?
 L.get(View.scoreByNameTotal('dex'), testSheet3); // ?
 L.get(Model.scorePool, testSheet3); // ?
-L.get([Model.scores, Scores.scoreByName('dex')], testSheet3); // ?
-
-// MIKE: maybe pass in the mapping function?
-selectSkills(testSheet2); // ?
-selectSkills(testSheet3); // ?
-selectScores(testSheet2); // ?
-selectSkills(testSheet); // ?
+L.get([Model.scores, Scores.scoreByName('dex')], testSheet3); // ? // ?
 
 // exports:
 export {
