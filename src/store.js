@@ -3,8 +3,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {
-  populateSkills, populateScores, populate, incScoreBase,
-} from './sheet-functions';
+  selectSkills, selectScores, populate, incScoreBase, setRace, 
+} from './sheet/sheet-functions';
 
 Vue.use(Vuex);
 
@@ -17,6 +17,7 @@ export default new Vuex.Store({
     //   }
     // },
     sheet: {
+      race: undefined,
       scorePool: 28,
       scores: [
         {
@@ -66,13 +67,17 @@ export default new Vuex.Store({
 
   getters: {
     sheet: ({ sheet }) => populate(sheet),
-    skills: ({ sheet }) => populateSkills(populate(sheet)),
-    scores: ({ sheet }) => populateScores(populate(sheet)),
+    skills: ({ sheet }) => selectSkills(populate(sheet)),
+    scores: ({ sheet }) => selectScores(populate(sheet)),
   },
 
   mutations: {
     incScoreBase: (state, { scoreName, val }) => {
       state.sheet = incScoreBase(scoreName, val)(state.sheet);
+    },
+
+    setRace: (state, raceName) => {
+      state.sheet.race = raceName;
     },
   },
   actions: {

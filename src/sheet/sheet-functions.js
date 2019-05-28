@@ -14,6 +14,7 @@ const cur = R.curry;
 // dummy data:
 
 const testSheet = {
+  race: undefined,
   scorePool: 28,
   scores: [
     {
@@ -346,6 +347,12 @@ const Stateful = {
     )),
 };
 
+// MIKE: you need to find out a way to essentially save history without
+// necessarily saving functions
+// - use a base value
+// - use the same exact race transform function for population and setting w/o vuex
+// - when setting w/vuex use a mutation and just set the race
+// - when getting w/vuex use a getter that runs the population function
 
 // testing transforms:
 
@@ -413,16 +420,17 @@ const subraceTransforms = {
   ],
 };
 
-const baseAbilityScoreTransforms = [
-  [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'cha', 12).execWith)],
-  [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'dex', 10).execWith)],
-  [L.modifyOp(Stateful.setScoreBase(ScoreSkillMappings, 'str', 10).execWith)],
-];
+Stateful.populateRace = State.get(
+  R.prop('race'),
+)
+  .chain(raceName => State.modify(
+    // L.transform(L.seq(...raceTransforms[raceName])),
+    L.transform(L.seq(...R.propOr([R.always], raceName, raceTransforms))),
+  ));
 
 const transforms = L.seq(...[
   ...raceTransforms['halfling'],
   ...subraceTransforms['lightfoot'],
-  // ...baseAbilityScoreTransforms,
 ]);
 
 const getTransform = optics => L.seq(...optics);
@@ -434,7 +442,6 @@ const testTransforms1 = [
   // [L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'race', 'dex', 5).execWith)],
   // [L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'some other source', 'dex', 2).execWith)],
 ];
-
 
 const testTransforms2 = [
   // MIKE: with ur current bonus data structure, there is no way to impart both
@@ -455,51 +462,29 @@ const testTransforms2 = [
   // [Model.skills, Skills.skillByName('perception'), Skill.bonuses, L.assignOp(Helper.createScoreBonusNew())],
 ];
 
-L.get(View.scoreByNameBonuses('dex'), newSheet);
-L.get([Model.scores, Scores.scoreByName('dex'), 'base'], newSheet);
-L.get(View.scoreByNameTotal('dex'), newSheet);
-
-L.get(View.scoreByNameBonuses('cha'), newSheet);
-L.get([Model.scores, Scores.scoreByName('cha'), 'base'], newSheet);
-L.get(View.scoreByNameTotal('cha'), newSheet);
-
-L.get(View.skillByNameTotal('sleight of hand'), newSheet);
-L.get(View.skillByNameBonuses('sleight of hand'), newSheet);
-
-L.get(View.skillByNameTotal('intimidation'), newSheet);
-L.get(View.skillByNameBonuses('intimidation'), newSheet);
-
-L.get(View.skillByNameBonuses('perception'), newSheet);
-L.get([Model.skills, Skills.skillByName('perception')], newSheet);
-L.get(View.skillByNameTotal('perception'), newSheet);
-
-const skills = L.collect([Model.skills, L.elems]); // ?
-
-skills(newSheet);
-// export thingy;
-// export const L.get([Model.skills, L.elems], )
-
 const skillByNameTotal = skillName => L.get(View.skillByNameTotal(skillName));
-const populateSkills = L.collectAs(Select.skill, [Model.skills, L.elems]);
-const populateScores = L.collectAs(Select.score, [Model.scores, L.elems]);
-populateScores(newSheet);
-const populate = L.transform(transforms);
+const selectSkills = L.collectAs(Select.skill, [Model.skills, L.elems]);
+const selectScores = L.collectAs(Select.score, [Model.scores, L.elems]);
+// const populate = L.transform(transforms);
 // just echo over anything set by the player as the "base" score:
-const setScoreBase = (scoreName, val) => L.transform([L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'base', scoreName, val).execWith)]);
-// const incScoreBase = (scoreName, val) => L.modify([Model.scores, Scores.scoreByName(scoreName), Score.bonuses, 'base', 'val'], R.add(val));
+const setScoreBase = (scoreName, val) => L.transform(
+  [L.modifyOp(Stateful.addBonusToScore(ScoreSkillMappings, 'base', scoreName, val).execWith)],
+);
 const incScoreBase = (scoreName, val) => L.transform(
   [L.modifyOp(Stateful.incScoreBase(ScoreSkillMappings, scoreName, val).execWith)],
 );
+const setRace = raceName => L.transform(L.seq(...raceTransforms[raceName]));
+const setRaceBase = raceName => L.transform([Model.race, L.setOp(raceName)]);
+const populateRace = L.transform([L.modifyOp(Stateful.populateRace.execWith)]);
+const populate = populateRace;
 
-// incScore(newSheet); // ?
-// const testSheet2 = setScoreBase('dex', 15)(newSheet); // ?
-// const testSheet2 = setScoreBase('dex', 15)(testSheet); // ?
-// const testSheet3 = incScoreBase('dex', 3)(testSheet2); // ?
-// const testSheet3 = L.transform([L.modifyOp(Stateful.incScoreBase(ScoreSkillMappings, 'dex', 2).execWith)], testSheet2);
-// const testSheet3 = incScoreBase('dex', 2)(testSheet2); // ?
+// testing:
 const testSheet2 = testSheet;
-const testSheet3 = incScoreBase('dex', 2)(testSheet2); // ?
-// const testSheet4 = Stateful.incScoreBase(ScoreSkillMappings, 'dex', 2).execWith
+const testSheet3 = incScoreBase('dex', 15)(testSheet2);
+const testSheet4 = setRace('halfling')(testSheet3); // ?
+const testSheet5 = setRaceBase('halfling')(testSheet);
+const testSheet6 = populateRace(testSheet5); // ?
+const testSheet7 = populateRace(testSheet); // ?
 
 L.get(View.scoreByNameTotal('dex'), testSheet2); // ?
 L.get(View.scoreByNameTotal('dex'), testSheet3); // ?
@@ -507,21 +492,21 @@ L.get(Model.scorePool, testSheet3); // ?
 L.get([Model.scores, Scores.scoreByName('dex')], testSheet3); // ?
 
 // MIKE: maybe pass in the mapping function?
-populateSkills(testSheet2); // ?
-populateSkills(testSheet3); // ?
-populateScores(testSheet2); // ?
+selectSkills(testSheet2); // ?
+selectSkills(testSheet3); // ?
+selectScores(testSheet2); // ?
+selectSkills(testSheet); // ?
 
-populateSkills(testSheet); // ?
-
-// export default exportObj;
-
+// exports:
 export {
   skillByNameTotal,
-  populateSkills,
-  populateScores,
+  selectSkills,
+  selectScores,
   populate,
   setScoreBase,
   incScoreBase,
+  setRace,
+  populateRace,
 };
 
 // MIKE: implement these:

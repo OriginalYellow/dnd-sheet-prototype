@@ -34,7 +34,7 @@
             <v-chip
               color="black"
               text-color="white"
-            >size: {{ sheet.size.val }}</v-chip>
+            >size: {{ !sheet.size ? 'unset' : sheet.size.val }}</v-chip>
 
             <v-chip
               color="black"
@@ -59,7 +59,10 @@
           </div>
 
           <div>
-            <v-btn @click="incScoreBase({scoreName: selectedScore, val: scoreChangeAmount})">
+            <v-btn
+              @click="incScoreBase({scoreName: selectedScore, val: scoreChangeAmount})"
+              color="orange"
+            >
               change score
             </v-btn>
           </div>
@@ -71,6 +74,15 @@
               label="race"
               placeholder="choose your race"
             ></v-select>
+          </div>
+
+          <div>
+            <v-btn
+              @click="setRace(selectedRace)"
+              color="orange"
+            >
+              set race
+            </v-btn>
           </div>
         </v-flex>
       </v-layout>
@@ -92,14 +104,17 @@ export default {
   }),
 
   methods: {
-    ...mapMutations(['incScoreBase']),
+    ...mapMutations(['incScoreBase', 'setRace']),
   },
 
   computed: {
     ...mapGetters(['sheet', 'skills', 'scores']),
 
     languages() {
-      return R.join(', ', this.sheet.languages.val);
+      return R.join(
+        ', ',
+        !this.sheet.languages ? [''] : this.sheet.languages.val,
+      );
     },
   },
 
